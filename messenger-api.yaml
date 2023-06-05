@@ -1,0 +1,314 @@
+openapi: 3.0.3
+info:
+  title: Messenger
+  description:
+    This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
+  version: 0.1.0
+servers:
+  - url: http://localhost/v1
+tags:
+  - name: users
+    description: Managing users
+    externalDocs:
+      description: Source code
+      url: https://github.com/barpav/msg-users
+  - name: sessions
+    description: User authentication and session management
+    externalDocs:
+      description: Source code
+      url: https://github.com/barpav/msg-sessions
+paths:
+  /users:
+    post:
+        tags:
+          - users
+        summary: Register new user
+        security: [] # No security
+        requestBody:
+          description: New user data.
+          content:
+            application/vnd.newUser.v1+json:
+              schema:
+                $ref: '#/components/schemas/newUser.v1'
+          required: true
+        responses:
+          '201':
+            description: New user successfully registered.
+          '400':
+            description: Incorrect parameters.
+            content:
+              text/plain; charset=utf-8:
+                example: User id can contain only 'a-z', '0-9', '-' and '_' characters.
+          '409':
+            description: User id already exists.
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    get:
+      tags:
+        - users
+      summary: Get user info
+      security:
+        - Session id: []
+      parameters:
+        - name: id
+          in: query
+          description: User identifier to get information about. If not specified, will return information about current user.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User info successfully received.
+          content:
+            application/vnd.userInfo.v1+json:
+              schema:
+                $ref: '#/components/schemas/userInfo.v1'
+        '401':
+          $ref: '#components/responses/Unauthorized-Session'
+        '404':
+          description: User not found.
+        '500':
+          $ref: '#components/responses/InternalServerError'
+    patch:
+      tags:
+        - users
+      summary: Edit user profile
+      security:
+        - Session id: []
+      requestBody:
+        description: User profile data.
+        content:
+          application/vnd.userProfileCommon.v1+json:
+            schema:
+              $ref: '#/components/schemas/userProfileCommon.v1'
+          application/vnd.userProfilePassword.v1+json:
+            schema:
+              $ref: '#/components/schemas/userProfilePassword.v1'
+        required: true
+      responses:
+        '200':
+          description: User profile successfully updated.
+        '400':
+          description: Invalid profile data.
+          content:
+            text/plain; charset=utf-8:
+              example: User name must be between 1 and 150 characters.
+        '401':
+          $ref: '#components/responses/Unauthorized-Session'
+        '500':
+          $ref: '#components/responses/InternalServerError'
+    delete:
+      tags:
+        - users
+      summary: Permanently delete user
+      security:
+        - Credentials: []
+      parameters:
+        - name: confirmation-code
+          in: query
+          description: If not specified, a new confirmation code will be returned.
+          required: false
+          schema:
+            type: string
+      responses:
+        '202':
+          description: User deletion request accepted.
+          headers:
+            confirmation-code:
+              description: In case of multiple calls, only the last generated code is valid.
+              schema:
+                type: string
+        '204':
+          description: User successfully deleted. This action cannot be undone.
+        '401':
+          $ref: '#components/responses/Unauthorized-Credentials'
+        '417':
+          description: Invalid confirmation code.
+        '500':
+          $ref: '#components/responses/InternalServerError'
+
+  /sessions:
+    post:
+      tags:
+        - sessions
+      summary: Start new user session
+      security:
+        - Credentials: []
+      responses:
+        '201':
+          description: New user session started.
+          headers:
+            session-id:
+              description: Used for authentication in most operations.
+              schema:
+                type: string
+        '401':
+          $ref: '#components/responses/Unauthorized-Credentials'
+        '429':
+          description: Maximum number of sessions has been reached.
+        '500':
+          $ref: '#components/responses/InternalServerError'
+    get:
+      tags:
+        - sessions
+      summary: Get active user sessions
+      security:
+        - Credentials: []
+      responses:
+        '200':
+          description: User sessions successfully received.
+          content:
+            application/vnd.userSessions.v1+json:
+              schema:
+                $ref: '#/components/schemas/userSessions.v1'
+        '401':
+          $ref: '#components/responses/Unauthorized-Credentials'
+        '500':
+          $ref: '#components/responses/InternalServerError'
+    delete:
+      tags:
+        - sessions
+      summary: End user sessions
+      security:
+        - Credentials: []
+      parameters:
+        - name: id
+          in: query
+          description: Session id to end. If not specified, all active user sessions will be ended.
+          required: false
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User session(s) successfully ended.
+        '401':
+          $ref: '#components/responses/Unauthorized-Credentials'
+        '500':
+          $ref: '#components/responses/InternalServerError'
+
+components:
+
+  securitySchemes:
+    Credentials:
+      type: http
+      scheme: basic
+      description: Used to manage sessions (start, read, end) and delete user.
+    Session id:
+      type: http
+      scheme: bearer
+      description: Used for most operations.
+
+  responses:
+    Unauthorized-Credentials:
+      description: Credentials is missing or invalid.
+    Unauthorized-Session:
+      description: Session does not exist or session id is missing.
+    InternalServerError:
+      description: Server-side issue.
+      headers:
+        issue:
+          description: Ticket that can be used for investigation.
+          schema:
+            type: string
+
+  schemas:
+    newUser.v1:
+      type: object
+      required:
+        - id
+        - name
+        - password
+      properties:
+        id:
+          type: string
+          description: Unique user identifier. Cannot be changed after registration. Can contain only 'a-z', '0-9', '-' and '_' characters.
+          example: jane
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          example: Jane Doe
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          description: Must contain at least one uppercase and lowercase letter and one digit.
+          example: My1stGoodPassword
+          minLength: 8
+    userInfo.v1:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Jane Doe
+          minLength: 1
+          maxLength: 150
+        picture:
+          type: string
+          description: TODO
+          example: TODO
+    userProfileCommon.v1:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Jane Doe
+          minLength: 1
+          maxLength: 150
+        picture:
+          type: string
+          description: TODO
+          example: TODO
+    userProfilePassword.v1:
+      type: object
+      required:
+        - current
+        - new
+      properties:
+        current:
+          type: string
+          description: Current user password to change.
+          example: My1stOlGoodPassword
+          minLength: 8
+        new:
+          type: string
+          description: New user password to set. Must contain at least one uppercase and lowercase letter and one digit.
+          example: My2ndPrettyNewPassword
+          minLength: 8
+    userSessions.v1:
+      type: object
+      required:
+        - active
+      properties:
+        active:
+          type: integer
+          description: Total number of active user sessions.
+        list:
+          type: array
+          description: List of active user sessions.
+          items:
+            type: object
+            required:
+              - id
+              - started
+              - lastActivity
+              - lastIp
+            description: User session info.
+            properties:
+              id:
+                type: string
+                description: Session id.
+              started:
+                type: string
+                description: Session start time.
+              lastActivity:
+                type: string
+                description: Time of a last activity.
+              lastIp:
+                type: string
+                description: IP address of a last activity.
+              lastAgent:
+                type: string
+                description: User agent of a last activity.
