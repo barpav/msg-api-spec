@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -48,7 +48,7 @@ paths:
         - users
       summary: Get user info
       security:
-        - Session id: []
+        - Session key: []
       parameters:
         - name: id
           in: query
@@ -74,7 +74,7 @@ paths:
         - users
       summary: Edit user profile
       security:
-        - Session id: []
+        - Session key: []
       requestBody:
         description: User profile data.
         content:
@@ -139,7 +139,11 @@ paths:
           description: New user session started.
           headers:
             session-id:
-              description: Used for authentication in most operations.
+              description: Started session id.
+              schema:
+                type: integer
+            session-key:
+              description: Used for authentication in most operations. Should be kept safe.
               schema:
                 type: string
         '401':
@@ -177,7 +181,7 @@ paths:
           description: Session id to end. If not specified, all active user sessions will be ended.
           required: false
           schema:
-            type: string
+            type: integer
       responses:
         '204':
           description: User session(s) successfully ended.
@@ -193,7 +197,7 @@ components:
       type: http
       scheme: basic
       description: Used to manage sessions (start, read, end) and delete user.
-    Session id:
+    Session key:
       type: http
       scheme: bearer
       description: Used for most operations.
@@ -202,7 +206,7 @@ components:
     Unauthorized-Credentials:
       description: Credentials is missing or invalid.
     Unauthorized-Session:
-      description: Session does not exist or session id is missing.
+      description: Session does not exist or session key is missing.
     InternalServerError:
       description: Server-side issue.
       headers:
@@ -298,7 +302,7 @@ components:
             description: User session info.
             properties:
               id:
-                type: string
+                type: integer
                 description: Session id.
               started:
                 type: string
