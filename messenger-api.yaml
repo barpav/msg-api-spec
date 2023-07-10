@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.2.0
+  version: 0.2.1
 servers:
   - url: http://localhost/v1
 tags:
@@ -167,6 +167,8 @@ paths:
                 $ref: '#/components/schemas/userSessions.v1'
         '401':
           $ref: '#components/responses/Unauthorized-Credentials'
+        '406':
+          description: Requested media type is not supported ("Accept" header).
         '500':
           $ref: '#components/responses/InternalServerError'
     delete:
@@ -289,6 +291,7 @@ components:
         active:
           type: integer
           description: Total number of active user sessions.
+          example: 1
         list:
           type: array
           description: List of active user sessions.
@@ -299,20 +302,26 @@ components:
               - started
               - lastActivity
               - lastIp
+              - lastAgent
             description: User session info.
             properties:
               id:
                 type: integer
                 description: Session id.
+                example: 3
               started:
                 type: string
-                description: Session start time.
+                description: Session start time (ISO 8601, UTC).
+                example: "2023-07-10T14:30:23Z"
               lastActivity:
                 type: string
-                description: Time of a last activity.
+                description: Time of a last activity (ISO 8601, UTC).
+                example: "2023-07-10T17:42:13Z"
               lastIp:
                 type: string
                 description: IP address of a last activity.
+                example: "132.54.78.32"
               lastAgent:
                 type: string
                 description: User agent of a last activity.
+                example: "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0"
