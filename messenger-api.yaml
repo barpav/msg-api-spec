@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.2.1
+  version: 0.2.2
 servers:
   - url: http://localhost/v1
 tags:
@@ -186,7 +186,7 @@ paths:
             type: integer
       responses:
         '204':
-          description: User session(s) successfully ended.
+          description: User session(s) successfully ended. Operation is idempotent.
         '401':
           $ref: '#components/responses/Unauthorized-Credentials'
         '500':
