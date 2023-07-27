@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.2.3
+  version: 0.3.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -69,6 +69,8 @@ paths:
           description: User not found.
         '406':
           description: Requested media type is not supported ("Accept" header).
+        '410':
+          description: User deleted.
         '500':
           $ref: '#components/responses/InternalServerError'
     patch:
