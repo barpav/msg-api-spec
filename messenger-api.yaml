@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.3.0
+  version: 0.4.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -17,6 +17,11 @@ tags:
     externalDocs:
       description: Source code
       url: https://github.com/barpav/msg-sessions
+  - name: messages
+    description: Messaging and sync. Learn more about syncing [on GitHub](https://github.com/barpav/msg-messages/blob/main/README.md).
+    externalDocs:
+      description: Source code
+      url: https://github.com/barpav/msg-messages
 paths:
   /users:
     post:
@@ -196,6 +201,207 @@ paths:
         '500':
           $ref: '#components/responses/InternalServerError'
 
+  /messages:
+    post:
+      tags:
+        - messages
+      summary: Send new message
+      security:
+          - Session key: []
+      requestBody:
+        description: Message data.
+        content:
+          application/vnd.newPersonalMessage.v1+json:
+            schema:
+              $ref: '#/components/schemas/newPersonalMessage.v1'
+      responses:
+          '201':
+            description: Message sent
+            headers:
+              Location:
+                description: New message relative location in format "/{id}"
+                schema:
+                  type: string
+              ETag:
+                $ref: '#components/headers/ETag-Timestamp'
+          '400':
+            description: Incorrect message data.
+            content:
+              text/plain; charset=utf-8:
+                example: Message recipient not found.
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    get:
+      tags:
+        - messages
+      summary: Sync messages
+      security:
+          - Session key: []
+      parameters:
+        - name: after
+          in: query
+          description: Timestamp of the last synced message.
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Maximum number of messages to return (min 1, max 100, default 50).
+          required: false
+          schema:
+            type: integer
+      responses:
+          '200':
+            description: Success
+            content:
+              application/vnd.messageUpdates.v1+json:
+                schema:
+                  $ref: '#/components/schemas/messageUpdates.v1'
+          '400':
+            description: Incorrect parameters.
+            content:
+              text/plain; charset=utf-8:
+                example: "Invalid limit: min 1, max 100."
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '500':
+            $ref: '#components/responses/InternalServerError'
+  
+  /messages/{id}:
+    get:
+      tags:
+        - messages
+      summary: Get message data
+      security:
+          - Session key: []
+      parameters:
+        - name: id
+          in: path
+          description: Message id to receive.
+          required: true
+          schema:
+            type: integer
+      responses:
+          '200':
+            description: Success. <br>
+              Since message type depends on how it was originally created, in favor of forward compatibility, 'Accept' header, if specified, would be ignored
+              (instead, client must check response 'Content-Type' header and handle/ignore specified message type accordingly).
+            content:
+              application/vnd.personalMessage.v1+json:
+                schema:
+                  $ref: '#/components/schemas/personalMessage.v1'
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: Message not found.
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    put:
+      tags:
+        - messages
+      summary: Edit message
+      security:
+          - Session key: []
+      requestBody:
+        description: Message data.
+        content:
+          application/vnd.editedPersonalMessage.v1+json:
+            schema:
+              $ref: '#/components/schemas/editedPersonalMessage.v1'
+      parameters:
+        - name: id
+          in: path
+          description: Message id to edit.
+          required: true
+          schema:
+            type: integer
+        - $ref: '#components/parameters/If-Match-Timestamp'
+      responses:
+          '200':
+            description: Message edited successfully.
+            headers:
+              ETag:
+                $ref: '#components/headers/ETag-Timestamp'
+          '400':
+            description: Incorrect message data.
+            content:
+              text/plain; charset=utf-8:
+                example: Message data violates 'editedPersonalMessage.v1' schema.
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: Message not found.
+          '410':
+            description: Message deleted.
+          '412':
+            $ref: '#components/responses/Timestamp-Not-Match'
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    patch:
+      tags:
+        - messages
+      summary: Mark message as read
+      security:
+          - Session key: []
+      parameters:
+        - name: id
+          in: path
+          description: Read message id.
+          required: true
+          schema:
+            type: integer
+        - $ref: '#components/parameters/If-Match-Timestamp'
+      responses:
+          '200':
+            description: Message successfully marked as read.
+            headers:
+              ETag:
+                $ref: '#components/headers/ETag-Timestamp'
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: Message not found.
+          '410':
+            description: Message deleted.
+          '412':
+            $ref: '#components/responses/Timestamp-Not-Match'
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    delete:
+      tags:
+        - messages
+      summary: Delete message data
+      description: Since all messages, even "deleted" ones, must be synchronized among different users and their clients, messages cannot be deleted completely. <br>
+        Instead they will be permanently modified to clear all sent content and mark messages as "deleted" to have the ability to sync such changes and actually delete data in users' clients.
+      security:
+          - Session key: []
+      parameters:
+        - name: id
+          in: path
+          description: Message id to delete data.
+          required: true
+          schema:
+            type: integer
+        - $ref: '#components/parameters/If-Match-Timestamp'
+      responses:
+          '200':
+            description: Message data successfully deleted.
+            headers:
+              ETag:
+                $ref: '#components/headers/ETag-Timestamp'
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: Message not found.
+          '410':
+            description: Message already deleted.
+          '412':
+            $ref: '#components/responses/Timestamp-Not-Match'
+          '500':
+            $ref: '#components/responses/InternalServerError'
+
 components:
 
   securitySchemes:
@@ -220,6 +426,24 @@ components:
           description: Ticket that can be used for investigation.
           schema:
             type: string
+    Timestamp-Not-Match:
+      description: Client message timestamp is out of date (not match with If-Match).
+
+  headers:
+    ETag-Timestamp:
+      description: Message new timestamp. <br>
+        Should be used to avoid receiving message data when syncing from the same client that made the modification.
+      schema:
+        type: integer
+
+  parameters:
+    If-Match-Timestamp:
+      name: If-Match
+      in: header
+      description: Modifying message timestamp that client have, which must match with current timestamp of the message in order to provide the operation.
+      schema:
+        type: integer
+      required: true
 
   schemas:
     newUser.v1:
@@ -329,3 +553,93 @@ components:
                 type: string
                 description: User agent of a last activity.
                 example: "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0"
+    newPersonalMessage.v1:
+      type: object
+      required:
+        - to
+        - text
+      properties:
+        to:
+          type: string
+          description: Recipient user id.
+          example: jane
+        text:
+          type: string
+          description: Message text.
+          example: "Hello!"
+          minLength: 1
+    messageUpdates.v1:
+      type: object
+      required:
+        - total
+      properties:
+        total:
+          type: integer
+          description: Number of messages in the list.
+          example: 1
+        messages:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - timestamp
+            description: Messages sorted according to their timestamp in ascending order.
+            properties:
+              id:
+                type: integer
+                description: Message id.
+                example: 235642
+              timestamp:
+                type: integer
+                description: Message update (create, edit, delete, receive, read) timestamp.
+                example: 7363
+    personalMessage.v1:
+      type: object
+      required:
+        - id
+        - timestamp
+      properties:
+        id:
+          type: integer
+          description: Message id.
+          example: 762523
+        timestamp:
+          type: integer
+          description: Message update (create, edit, delete, receive, read) timestamp.
+          example: 36218
+        from:
+          type: string
+          description: Sender user id.
+          example: jane
+        to:
+          type: string
+          description: Recipient user id.
+          example: john
+        created:
+          type: string
+          description: Message creation time (ISO 8601, UTC).
+          example: "2023-07-29T19:09:13Z"
+        edited:
+          type: boolean
+          description: True if message has been edited.
+        read:
+          type: boolean
+          description: True if message has been read.
+        text:
+          type: string
+          description: Message text.
+          example: "Hello! How's it going?"
+        deleted:
+          type: boolean
+          description: Message deletion flag.
+    editedPersonalMessage.v1:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Edited message text.
+          example: "Hello there!"
+          minLength: 1
