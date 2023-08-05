@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.4.0
+  version: 0.5.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -22,6 +22,11 @@ tags:
     externalDocs:
       description: Source code
       url: https://github.com/barpav/msg-messages
+  - name: files
+    description: File sharing
+    externalDocs:
+      description: Source code
+      url: https://github.com/barpav/msg-files
 paths:
   /users:
     post:
@@ -402,6 +407,176 @@ paths:
           '500':
             $ref: '#components/responses/InternalServerError'
 
+  /files:
+    post:
+      tags:
+        - files
+      summary: Allocate new file and set share options
+      security:
+          - Session key: []
+      requestBody:
+        description: New file description
+        content:
+          application/vnd.newPrivateFile.v1+json:
+            schema:
+              $ref: '#/components/schemas/newPrivateFile.v1'
+          application/vnd.newPublicFile.v1+json:
+            schema:
+              $ref: '#/components/schemas/newPublicFile.v1'
+      responses:
+          '201':
+            description: New file allocated successfully. 
+            headers:
+              Location:
+                description: New file relative location in format "/{id}"
+                schema:
+                  type: string
+          '400':
+            description: Incorrect file description.
+            content:
+              text/plain; charset=utf-8:
+                example: File name must be specified.
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '500':
+            $ref: '#components/responses/InternalServerError'
+
+  /files/{id}:
+    post:
+      tags:
+        - files
+      summary: Upload new file content
+      security:
+          - Session key: []
+      requestBody:
+        description: File content in binary format.
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      parameters:
+        - name: id
+          in: path
+          description: Allocated file id to upload its content.
+          required: true
+          schema:
+            type: integer
+      responses:
+          '200':
+            description: File content uploaded successfully.
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: Allocated file not found.
+          '409':
+            description: File content already uploaded.
+          '413':
+            description: File too large.
+          '415':
+            description: Unsupported media type.
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    get:
+      tags:
+        - files
+      summary: Get file data
+      security:
+          - Session key: []
+      parameters:
+        - name: id
+          in: path
+          description: File id to receive data.
+          required: true
+          schema:
+            type: integer
+      responses:
+          '200':
+            description: File successfully received.
+            content:
+              "*/*":
+                schema:
+                  type: string
+                  format: binary
+                  description: File data in binary format.
+            headers:
+              Content-Type:
+                description: File MIME type as it was specified on file allocation.
+                schema:
+                  type: string
+              Content-Disposition:
+                description: In format 'attachment; filename="name"' where "name" is the name of the file as it was specified on file allocation.
+                schema:
+                  type: string
+              Content-Length:
+                description: File size in bytes.
+                schema:
+                  type: integer
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: File not found.
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    head:
+      tags:
+        - files
+      summary: Get file info
+      description: Same as GET, but without actual file data.
+      security:
+          - Session key: []
+      parameters:
+        - name: id
+          in: path
+          description: File id to receive info.
+          required: true
+          schema:
+            type: integer
+      responses:
+          '200':
+            description: File info successfully received.
+            headers:
+              Content-Type:
+                description: File MIME type as it was specified on file allocation.
+                schema:
+                  type: string
+              Content-Disposition:
+                description: In format 'attachment; filename="name"' where "name" is the name of the file as it was specified on file allocation.
+                schema:
+                  type: string
+              Content-Length:
+                description: File size in bytes.
+                schema:
+                  type: integer
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: File not found.
+          '500':
+            $ref: '#components/responses/InternalServerError'
+    delete:
+      tags:
+        - files
+      summary: Delete file
+      security:
+          - Session key: []
+      parameters:
+        - name: id
+          in: path
+          description: File id to delete.
+          required: true
+          schema:
+            type: integer
+      responses:
+          '204':
+            description: File successfully deleted.
+          '401':
+            $ref: '#components/responses/Unauthorized-Session'
+          '404':
+            description: File not found.
+          '500':
+            $ref: '#components/responses/InternalServerError'
+
 components:
 
   securitySchemes:
@@ -642,4 +817,45 @@ components:
           type: string
           description: Edited message text.
           example: "Hello there!"
+          minLength: 1
+    newPrivateFile.v1:
+      type: object
+      description: Description of the file, that will be available only for specified users.
+      required:
+        - name
+        - mime
+        - access
+      properties:
+        name:
+          type: string
+          description: File name with extension (if any).
+          example: "vacation.jpg"
+          minLength: 1
+        mime:
+          type: string
+          description: File MIME type.
+          example: "image/jpeg"
+          minLength: 1
+        access:
+          type: array
+          description: Users (ids) who will have access to the file.
+          items:
+            type: string
+            example: john
+    newPublicFile.v1:
+      type: object
+      description: Description of the file, that will be available for any authenticated user.
+      required:
+        - name
+        - mime
+      properties:
+        name:
+          type: string
+          description: File name with extension (if any).
+          example: "profile.jpg"
+          minLength: 1
+        mime:
+          type: string
+          description: File MIME type.
+          example: "image/jpeg"
           minLength: 1
