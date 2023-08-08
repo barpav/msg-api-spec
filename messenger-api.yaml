@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.5.0
+  version: 0.5.1
 servers:
   - url: http://localhost/v1
 tags:
@@ -51,6 +51,8 @@ paths:
                 example: User id can contain only 'a-z', '0-9', '-' and '_' characters.
           '409':
             description: User id already exists.
+          '415':
+            description: Unsupported new user data (media type).
           '500':
             $ref: '#components/responses/InternalServerError'
     get:
@@ -109,6 +111,8 @@ paths:
               example: User name must be between 1 and 150 characters.
         '401':
           $ref: '#components/responses/Unauthorized-Session'
+        '415':
+            description: Unsupported profile data (media type).
         '500':
           $ref: '#components/responses/InternalServerError'
     delete:
@@ -236,6 +240,8 @@ paths:
                 example: Message recipient not found.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
+          '415':
+            description: Unsupported message data (media type).
           '500':
             $ref: '#components/responses/InternalServerError'
     get:
@@ -271,6 +277,8 @@ paths:
                 example: "Invalid limit: min 1, max 100."
           '401':
             $ref: '#components/responses/Unauthorized-Session'
+          '406':
+            description: Requested media type is not supported ("Accept" header).
           '500':
             $ref: '#components/responses/InternalServerError'
   
@@ -333,7 +341,7 @@ paths:
             description: Incorrect message data.
             content:
               text/plain; charset=utf-8:
-                example: Message data violates 'editedPersonalMessage.v1' schema.
+                example: Message text must be specified.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
           '404':
@@ -342,6 +350,8 @@ paths:
             description: Message deleted.
           '412':
             $ref: '#components/responses/Timestamp-Not-Match'
+          '415':
+            description: Unsupported message data (media type).
           '500':
             $ref: '#components/responses/InternalServerError'
     patch:
@@ -438,6 +448,8 @@ paths:
                 example: File name must be specified.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
+          '415':
+            description: Unsupported file description (media type).
           '500':
             $ref: '#components/responses/InternalServerError'
 
