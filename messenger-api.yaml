@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.5.1
+  version: 0.5.2
 servers:
   - url: http://localhost/v1
 tags:
@@ -479,6 +479,8 @@ paths:
             description: File content uploaded successfully.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
+          '403':
+            description: Only owner of the allocated file can upload its content.
           '404':
             description: Allocated file not found.
           '409':
@@ -584,6 +586,8 @@ paths:
             description: File successfully deleted.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
+          '403':
+            description: Only owner of the file can delete it.
           '404':
             description: File not found.
           '500':
