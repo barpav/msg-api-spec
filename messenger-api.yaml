@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.5.2
+  version: 0.5.3
 servers:
   - url: http://localhost/v1
 tags:
@@ -473,7 +473,7 @@ paths:
           description: Allocated file id to upload its content.
           required: true
           schema:
-            type: integer
+            type: string
       responses:
           '200':
             description: File content uploaded successfully.
@@ -503,7 +503,7 @@ paths:
           description: File id to receive data.
           required: true
           schema:
-            type: integer
+            type: string
       responses:
           '200':
             description: File successfully received.
@@ -545,7 +545,7 @@ paths:
           description: File id to receive info.
           required: true
           schema:
-            type: integer
+            type: string
       responses:
           '200':
             description: File info successfully received.
@@ -580,7 +580,7 @@ paths:
           description: File id to delete.
           required: true
           schema:
-            type: integer
+            type: string
       responses:
           '204':
             description: File successfully deleted.
