@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.5.3
+  version: 0.6.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -672,8 +672,10 @@ components:
           maxLength: 150
         picture:
           type: string
-          description: TODO
-          example: TODO
+          description: File id of the image.
+          example: 64e5404423c5510ae6f4126e
+          minLength: 24
+          maxLength: 24
     userProfileCommon.v1:
       type: object
       properties:
@@ -684,8 +686,10 @@ components:
           maxLength: 150
         picture:
           type: string
-          description: TODO
-          example: TODO
+          description: File id of the image.
+          example: 64e5404423c5510ae6f4126e
+          minLength: 24
+          maxLength: 24
     userProfilePassword.v1:
       type: object
       required:
