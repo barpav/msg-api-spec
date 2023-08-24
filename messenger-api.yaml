@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.6.0
+  version: 0.6.1
 servers:
   - url: http://localhost/v1
 tags:
@@ -572,6 +572,8 @@ paths:
       tags:
         - files
       summary: Delete file
+      description: "Explicit file deletion is not required in most cases:
+        all files that are not used anywhere in the service will be automatically deleted after a while."
       security:
           - Session key: []
       parameters:
