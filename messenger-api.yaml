@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.6.1
+  version: 0.7.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -344,6 +344,8 @@ paths:
                 example: Message text must be specified.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
+          '403':
+            description: Only sender can edit the message.
           '404':
             description: Message not found.
           '410':
@@ -376,6 +378,8 @@ paths:
                 $ref: '#components/headers/ETag-Timestamp'
           '401':
             $ref: '#components/responses/Unauthorized-Session'
+          '403':
+            description: Only recipient can mark the message as read.
           '404':
             description: Message not found.
           '410':
@@ -752,9 +756,9 @@ components:
                 example: "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0"
     newPersonalMessage.v1:
       type: object
+      description: At least one of "text" or "files" must be specified.
       required:
         - to
-        - text
       properties:
         to:
           type: string
@@ -765,6 +769,15 @@ components:
           description: Message text.
           example: "Hello!"
           minLength: 1
+        files:
+          type: array
+          description: Message attachments.
+          items:
+            type: string
+            description: File id.
+            example: 64e5404423c5510ae6f4126e
+            minLength: 24
+            maxLength: 24
     messageUpdates.v1:
       type: object
       required:
@@ -827,19 +840,36 @@ components:
           type: string
           description: Message text.
           example: "Hello! How's it going?"
+        files:
+          type: array
+          description: Message attachments.
+          items:
+            type: string
+            description: File id.
+            example: 64e5404423c5510ae6f4126e
+            minLength: 24
+            maxLength: 24
         deleted:
           type: boolean
           description: Message deletion flag.
     editedPersonalMessage.v1:
       type: object
-      required:
-        - text
+      description: At least one of "text" or "files" must be specified.
       properties:
         text:
           type: string
           description: Edited message text.
           example: "Hello there!"
           minLength: 1
+        files:
+          type: array
+          description: Edited message attachments.
+          items:
+            type: string
+            description: File id.
+            example: 64e5404423c5510ae6f4126e
+            minLength: 24
+            maxLength: 24
     newPrivateFile.v1:
       type: object
       description: Description of the file, that will be available only for specified users.
