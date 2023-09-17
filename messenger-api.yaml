@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.8.0
+  version: 0.8.1
 servers:
   - url: http://localhost/v1
 tags:
@@ -223,6 +223,7 @@ paths:
           application/vnd.newPersonalMessage.v1+json:
             schema:
               $ref: '#/components/schemas/newPersonalMessage.v1'
+        required: true
       responses:
           '201':
             description: Message sent
@@ -318,6 +319,7 @@ paths:
       security:
           - Session key: []
       requestBody:
+        required: true
         description: Message data.
         content:
           application/vnd.editedMessageText.v1+json:
@@ -400,6 +402,7 @@ paths:
       security:
           - Session key: []
       requestBody:
+        required: true
         description: New file description
         content:
           application/vnd.newPrivateFile.v1+json:
@@ -436,6 +439,7 @@ paths:
       security:
           - Session key: []
       requestBody:
+        required: true
         description: File content in binary format.
         content:
           application/octet-stream:
