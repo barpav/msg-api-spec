@@ -3,7 +3,7 @@ info:
   title: Messenger
   description:
     This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.7.0
+  version: 0.8.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -237,7 +237,7 @@ paths:
             description: Incorrect message data.
             content:
               text/plain; charset=utf-8:
-                example: Message recipient not found.
+                example: Message recipient must be specified.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
           '415':
@@ -274,7 +274,7 @@ paths:
             description: Incorrect parameters.
             content:
               text/plain; charset=utf-8:
-                example: "Invalid limit: min 1, max 100."
+                example: "Invalid parameter 'limit': min 1, max 100."
           '401':
             $ref: '#components/responses/Unauthorized-Session'
           '406':
@@ -299,8 +299,8 @@ paths:
       responses:
           '200':
             description: Success. <br>
-              Since message type depends on how it was originally created, in favor of forward compatibility, 'Accept' header, if specified, would be ignored
-              (instead, client must check response 'Content-Type' header and handle/ignore specified message type accordingly).
+              Since message type depends on how it was originally created, in favor of forward compatibility, 'Accept' header, if specified, would be ignored.
+              Instead, client must check response 'Content-Type' header and handle specified message type accordingly.
             content:
               application/vnd.personalMessage.v1+json:
                 schema:
@@ -311,41 +311,44 @@ paths:
             description: Message not found.
           '500':
             $ref: '#components/responses/InternalServerError'
-    put:
+    patch:
       tags:
         - messages
-      summary: Edit message
+      summary: Modify message
       security:
           - Session key: []
       requestBody:
         description: Message data.
         content:
-          application/vnd.editedPersonalMessage.v1+json:
+          application/vnd.editedMessageText.v1+json:
             schema:
-              $ref: '#/components/schemas/editedPersonalMessage.v1'
+              $ref: '#/components/schemas/editedMessageText.v1'
+          application/vnd.messageReadMark.v1+json:
+            schema:
+              $ref: '#/components/schemas/messageReadMark.v1'
       parameters:
         - name: id
           in: path
-          description: Message id to edit.
+          description: Message id to modify.
           required: true
           schema:
             type: integer
         - $ref: '#components/parameters/If-Match-Timestamp'
       responses:
           '200':
-            description: Message edited successfully.
+            description: Message modified successfully.
             headers:
               ETag:
                 $ref: '#components/headers/ETag-Timestamp'
+          '304':
+            description: Message has not been modified (no changes).
           '400':
-            description: Incorrect message data.
+            description: Incorrect modification.
             content:
               text/plain; charset=utf-8:
-                example: Message text must be specified.
+                example: Text in a message without attachments cannot be empty.
           '401':
             $ref: '#components/responses/Unauthorized-Session'
-          '403':
-            description: Only sender can edit the message.
           '404':
             description: Message not found.
           '410':
@@ -356,44 +359,12 @@ paths:
             description: Unsupported message data (media type).
           '500':
             $ref: '#components/responses/InternalServerError'
-    patch:
-      tags:
-        - messages
-      summary: Mark message as read
-      security:
-          - Session key: []
-      parameters:
-        - name: id
-          in: path
-          description: Read message id.
-          required: true
-          schema:
-            type: integer
-        - $ref: '#components/parameters/If-Match-Timestamp'
-      responses:
-          '200':
-            description: Message successfully marked as read.
-            headers:
-              ETag:
-                $ref: '#components/headers/ETag-Timestamp'
-          '401':
-            $ref: '#components/responses/Unauthorized-Session'
-          '403':
-            description: Only recipient can mark the message as read.
-          '404':
-            description: Message not found.
-          '410':
-            description: Message deleted.
-          '412':
-            $ref: '#components/responses/Timestamp-Not-Match'
-          '500':
-            $ref: '#components/responses/InternalServerError'
     delete:
       tags:
         - messages
       summary: Delete message data
       description: Since all messages, even "deleted" ones, must be synchronized among different users and their clients, messages cannot be deleted completely. <br>
-        Instead they will be permanently modified to clear all sent content and mark messages as "deleted" to have the ability to sync such changes and actually delete data in users' clients.
+        Instead they will be permanently modified to clear all sent content and mark messages as "deleted" to have the ability to sync such changes and actually delete data by users' clients.
       security:
           - Session key: []
       parameters:
@@ -831,8 +802,9 @@ components:
           description: Message creation time (ISO 8601, UTC).
           example: "2023-07-29T19:09:13Z"
         edited:
-          type: boolean
-          description: True if message has been edited.
+          type: string
+          description: Last time when message was edited (ISO 8601, UTC).
+          example: "2023-07-29T19:10:01Z"
         read:
           type: boolean
           description: True if message has been read.
@@ -852,24 +824,15 @@ components:
         deleted:
           type: boolean
           description: Message deletion flag.
-    editedPersonalMessage.v1:
+    editedMessageText.v1:
       type: object
-      description: At least one of "text" or "files" must be specified.
+      required:
+        - text
       properties:
         text:
           type: string
           description: Edited message text.
           example: "Hello there!"
-          minLength: 1
-        files:
-          type: array
-          description: Edited message attachments.
-          items:
-            type: string
-            description: File id.
-            example: 64e5404423c5510ae6f4126e
-            minLength: 24
-            maxLength: 24
     newPrivateFile.v1:
       type: object
       description: Description of the file, that will be available only for specified users.
@@ -911,3 +874,11 @@ components:
           description: File MIME type.
           example: "image/jpeg"
           minLength: 1
+    messageReadMark.v1:
+      type: object
+      required:
+        - read
+      properties:
+        read:
+          type: boolean
+          description: True if message has been read.
