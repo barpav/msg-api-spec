@@ -2,8 +2,8 @@ openapi: 3.0.3
 info:
   title: Messenger
   description:
-    This is messenger back end made for personal educational purposes. Learn more [on GitHub](https://github.com/barpav/messenger).
-  version: 0.8.1
+    This is [Messenger](https://github.com/barpav/messenger) pet-project REST API specification and fully-functional client. OpenAPI 3.0 YAML source can be found [here](https://github.com/barpav/msg-api-spec/blob/main/messenger-api.yaml).
+  version: 1.0.0
 servers:
   - url: http://localhost/v1
 tags:
@@ -18,7 +18,7 @@ tags:
       description: Source code
       url: https://github.com/barpav/msg-sessions
   - name: messages
-    description: Messaging and sync. Learn more about syncing [on GitHub](https://github.com/barpav/msg-messages/blob/main/README.md).
+    description: Messaging and sync. Learn more about syncing [on GitHub](https://github.com/barpav/msg-messages/blob/main/README.md#message-syncing).
     externalDocs:
       description: Source code
       url: https://github.com/barpav/msg-messages
@@ -738,7 +738,7 @@ components:
         to:
           type: string
           description: Recipient user id.
-          example: jane
+          example: john
         text:
           type: string
           description: Message text.
@@ -774,10 +774,10 @@ components:
               id:
                 type: integer
                 description: Message id.
-                example: 235642
+                example: 5356
               timestamp:
                 type: integer
-                description: Message update (create, edit, delete, receive, read) timestamp.
+                description: Message update (create, modify, delete) timestamp.
                 example: 7363
     personalMessage.v1:
       type: object
@@ -788,11 +788,11 @@ components:
         id:
           type: integer
           description: Message id.
-          example: 762523
+          example: 1457
         timestamp:
           type: integer
-          description: Message update (create, edit, delete, receive, read) timestamp.
-          example: 36218
+          description: Message update (create, modify, delete) timestamp.
+          example: 2196
         from:
           type: string
           description: Sender user id.
